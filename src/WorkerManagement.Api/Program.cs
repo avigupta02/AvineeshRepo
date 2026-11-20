@@ -1,0 +1,12 @@
+using WorkerManagement.BusinessLogic;
+using WorkerManagement.DataAccess;
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddEndpointsApiExplorer(); builder.Services.AddSwaggerGen(); builder.Services.AddSingleton<IWorkerRepository, JsonWorkerRepository>(); builder.Services.AddScoped<WorkerService>();
+var app = builder.Build();
+app.UseExceptionHandler("/error"); app.UseSwagger(); app.UseSwaggerUI();
+app.MapGet("/workers", async (WorkerService service, CancellationToken ct) => Results.Ok(await service.GetAllAsync(ct)));
+app.MapPost("/workers", async (WorkerInput input, WorkerService service, CancellationToken ct) => Results.Created($"/workers", await service.CreateAsync(input, ct)));
+app.MapPut("/workers/{id:guid}", async (Guid id, WorkerInput input, WorkerService service, CancellationToken ct) => Results.Ok(await service.UpdateAsync(id, input, ct)));
+app.MapDelete("/workers/{id:guid}", async (Guid id, WorkerService service, CancellationToken ct) => { await service.DeleteAsync(id, ct); return Results.NoContent(); });
+app.Map("/error", () => Results.Problem("An unexpected error occurred."));
+app.Run();
