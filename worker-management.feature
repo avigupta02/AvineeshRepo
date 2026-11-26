@@ -19,6 +19,12 @@ Feature: Worker Management API
       | a missing required field |
       | a malformed email address |
 
+  Scenario: Reject a worker with a duplicate WorkerId
+    Given a worker with WorkerId "W-100" is already persisted
+    When I submit another valid worker with WorkerId "W-100"
+    Then the API rejects the duplicate identifier with a client-readable response
+    And the new worker is not persisted
+
   Scenario: Create and list a persisted worker
     Given the configured JSON data file contains no worker with WorkerId "W-101"
     When I create a valid worker with WorkerId "W-101"
@@ -57,6 +63,13 @@ Feature: Worker Management API
     When I delete worker "W-405"
     Then the API returns a not-found response
     And the other workers remain unchanged
+
+  Scenario: Preserve worker data when JSON file access fails
+    Given workers are persisted in the configured JSON data file
+    And a file access or serialization error occurs during a write
+    When a worker write operation is requested
+    Then the API returns a safe error response
+    And existing persisted worker data is not corrupted
 
   Scenario: Discover worker CRUD endpoints through Swagger UI
     Given the API is running
